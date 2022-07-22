@@ -80,15 +80,6 @@ final class HomeIdpDiscoveryAuthenticator extends AbstractUsernameFormAuthentica
 
         if (username != null) {
             username = username.trim();
-            if ("".equalsIgnoreCase(username))
-                username = null;
-        }
-
-        if (username == null) {
-            context.getEvent().error(Errors.USER_NOT_FOUND);
-            Response challengeResponse = challenge(context, getDefaultChallengeMessage(context), FIELD_USERNAME);
-            context.failureChallenge(AuthenticationFlowError.INVALID_USER, challengeResponse);
-            return null;
         }
 
         context.getEvent().detail(Details.USERNAME, username);
@@ -102,7 +93,14 @@ final class HomeIdpDiscoveryAuthenticator extends AbstractUsernameFormAuthentica
         } catch (ModelDuplicateException ex) {
             LOG.debugf(ex,"Could not find user %s", username);
         }
-
+        
+        if (username == null) {
+            context.getEvent().error(Errors.USER_NOT_FOUND);
+            Response challengeResponse = challenge(context, getDefaultChallengeMessage(context), FIELD_USERNAME);
+            context.failureChallenge(AuthenticationFlowError.INVALID_USER, challengeResponse);
+            return null;
+        }
+        
         return username;
     }
 
