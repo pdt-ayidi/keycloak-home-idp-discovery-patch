@@ -80,27 +80,35 @@ final class HomeIdpDiscoveryAuthenticator extends AbstractUsernameFormAuthentica
 
         if (username != null) {
             username = username.trim();
+        } else {
+            context.getEvent().error(Errors.USER_NOT_FOUND);
+            Response challengeResponse = challenge(context, getDefaultChallengeMessage(context), FIELD_USERNAME);
+            context.failureChallenge(AuthenticationFlowError.INVALID_USER, challengeResponse);
+            return null;
         }
 
         context.getEvent().detail(Details.USERNAME, username);
         context.getAuthenticationSession().setAuthNote(AbstractUsernameFormAuthenticator.ATTEMPTED_USERNAME, username);
 
+        UserModel user = null;
         try {
-            UserModel user = KeycloakModelUtils.findUserByNameOrEmail(context.getSession(), context.getRealm(), username);
-            if (user != null) {
-                context.setUser(user);
-            }
+            user = KeycloakModelUtils.findUserByNameOrEmail(context.getSession(), context.getRealm(), username);
         } catch (ModelDuplicateException ex) {
             LOG.debugf(ex,"Could not find user %s", username);
-        }
-        
-        if (username == null) {
             context.getEvent().error(Errors.USER_NOT_FOUND);
             Response challengeResponse = challenge(context, getDefaultChallengeMessage(context), FIELD_USERNAME);
             context.failureChallenge(AuthenticationFlowError.INVALID_USER, challengeResponse);
             return null;
         }
         
+        if (user == null) {
+            context.getEvent().error(Errors.USER_NOT_FOUND);
+            Response challengeResponse = challenge(context, getDefaultChallengeMessage(context), FIELD_USERNAME);
+            context.failureChallenge(AuthenticationFlowError.INVALID_USER, challengeResponse);
+            return null;
+        }
+        
+        context.setUser(user);
         return username;
     }
 
